@@ -3,7 +3,7 @@ import cv2
 import tensorflow as tf
 from absl import logging
 from itertools import repeat
-import yolov3
+import yolo_v3
 
 
 yolo_iou_threshold = 0.6  # порог пересечения относительно объединения (iou)
