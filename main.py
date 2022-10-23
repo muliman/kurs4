@@ -1,34 +1,13 @@
-import numpy as np
-import cv2
-import tensorflow as tf
+
 from absl import logging
 from itertools import repeat
-import yolo_v3
-
-
-yolo_iou_threshold = 0.6  # порог пересечения относительно объединения (iou)
-yolo_score_threshold = 0.6
-weight_yolov3 = '~/Desktop/kurs4/checkpoints/yolov3.weights'  # путь к файлу весов
-weights = '~/Desktop/kurs4/checkpoints/yolov3.tf'  # путь к файлу checkpoint'ов
-size = 416  # приводим изображения к этому размеру
-checkpoints = '~/Desktop/kurs4/checkpoints/yolov3.tf'
-num_classes = 80  # количество классов в модели
-
-YOLO_V3_LAYERS = [
-    'yolo_darknet',
-    'yolo_conv_0',
-    'yolo_output_0',
-    'yolo_conv_1',
-    'yolo_output_1',
-    'yolo_conv_2',
-    'yolo_output_2',
-]
+import yolo_v3 as y3
 
 
 def load_darknet_weights(model, weights_file):
     wf = open(weights_file, 'rb')
     major, minor, revision, seen, _ = np.fromfile(wf, dtype=np.int32, count=5)
-    layers = YOLO_V3_LAYERS
+    layers = y3.YOLO_V3_LAYERS
 
     for layer_name in layers:
         sub_model = model.get_layer(layer_name)
@@ -173,11 +152,11 @@ def preprocess_image(x_train, size):
     return (tf.image.resize(x_train, (size, size))) / 255
 
 
-yolo = yolov3.YoloV3(classes=num_classes)
+yolo = y3.YoloV3(classes=y3.num_classes)
 
-load_darknet_weights(yolo, weight_yolov3)
+load_darknet_weights(yolo, y3.weight_yolov3)
 
-yolo.save_weights(checkpoints)
+yolo.save_weights(y3.checkpoints)
 
 class_names = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck",
                "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench",
@@ -196,7 +175,7 @@ def detect_objects(img_path, white_list=None):
     img = tf.image.decode_image(open(image, 'rb').read(), channels=3)
 
     img = tf.expand_dims(img, 0)
-    img = preprocess_image(img, size)
+    img = preprocess_image(img, y3.size)
     boxes, scores, classes, nums = yolo(img)
 
     img = cv2.imread(image)
@@ -204,8 +183,8 @@ def detect_objects(img_path, white_list=None):
 
     cv2.imwrite('detected_{:}'.format(img_path), img)
 
-    detected = Image.open('detected_{:}'.format(img_path))
+    detected = y3.Image.open('detected_{:}'.format(img_path))
     detected.show()
 
 
-detect_objects('test.jpg', ['bear'])
+detect_objects('./images/test.jpg', ['bear'])
