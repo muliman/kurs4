@@ -1,8 +1,6 @@
 import batch_normalization as batch
 import numpy as np
-import cv2
 import tensorflow as tf
-from absl import logging
 from itertools import repeat
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Add, Concatenate, Lambda
@@ -15,10 +13,10 @@ from tensorflow.keras.losses import sparse_categorical_crossentropy
 
 yolo_iou_threshold = 0.6  # порог пересечения относительно объединения (iou)
 yolo_score_threshold = 0.6
-weight_yolov3 = '~/Desktop/kurs4/checkpoints/yolov3.weights'  # путь к файлу весов
-weights = '~/Desktop/kurs4/checkpoints/yolov3.tf'  # путь к файлу checkpoint'ов
+weight_yolov3 = './checkpoints/yolov3.weights'  # путь к файлу весов
+weights = './kurs4/checkpoints/yolov3.tf'  # путь к файлу checkpoint'ов
 size = 416  # приводим изображения к этому размеру
-checkpoints = '~/Desktop/kurs4/checkpoints/yolov3.tf'
+checkpoints = './kurs4/checkpoints/yolov3.tf'
 num_classes = 80  # количество классов в модели
 
 YOLO_V3_LAYERS = [
