@@ -1,7 +1,9 @@
 import numpy as np
 from absl import logging
-from itertools import repeat
 import yolo_v3 as y3
+import tensorflow as tf
+import cv2
+from PIL import Image
 
 
 def load_darknet_weights(model, weights_file):
@@ -72,7 +74,7 @@ def intersection_over_union(box1, box2):
     return float(intersect_area) / union_area
 
 
-def draw_outputs(img, outputs, class_names):
+def draw_outputs(img, outputs, class_names, white_list=None):
     boxes, score, classes, nums = outputs
     boxes, score, classes, nums = boxes[0], score[0], classes[0], nums[0]
     wh = np.flip(img.shape[0:2])
@@ -173,7 +175,7 @@ class_names = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "tra
 def detect_objects(img_path, white_list=None):
     image = img_path  # Путь к изображению.
     img = tf.image.decode_image(open(image, 'rb').read(), channels=3)
-
+    detected_img = './images/detected.jpg'  # Путь куда будет сохранятся результат определения изображения
     img = tf.expand_dims(img, 0)
     img = preprocess_image(img, y3.size)
     boxes, scores, classes, nums = yolo(img)
@@ -181,10 +183,10 @@ def detect_objects(img_path, white_list=None):
     img = cv2.imread(image)
     img = draw_outputs(img, (boxes, scores, classes, nums), class_names, white_list)
 
-    cv2.imwrite('detected_{:}'.format(img_path), img)
+    cv2.imwrite('{:}'.format(detected_img), img)
 
-    detected = y3.Image.open('detected_{:}'.format(img_path))
+    detected = Image.open('{:}'.format(detected_img))
     detected.show()
 
 
-detect_objects('./images/test.jpg', ['bear'])
+detect_objects('./images/test.jpg', [''])  # test.jpg тестируемое изображение предварительно загруженное
