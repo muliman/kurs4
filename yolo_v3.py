@@ -1,10 +1,35 @@
-import batch_normalization
+import batch_normalization as batch
 import numpy as np
 import cv2
 import tensorflow as tf
 from absl import logging
 from itertools import repeat
+from tensorflow.keras import Model
+from tensorflow.keras.layers import Add, Concatenate, Lambda
+from tensorflow.keras.layers import Conv2D, Input, LeakyReLU
+from tensorflow.keras.layers import MaxPool2D, UpSampling2D, ZeroPadding2D
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.losses import binary_crossentropy
+from tensorflow.keras.losses import sparse_categorical_crossentropy
 
+
+yolo_iou_threshold = 0.6  # порог пересечения относительно объединения (iou)
+yolo_score_threshold = 0.6
+weight_yolov3 = '~/Desktop/kurs4/checkpoints/yolov3.weights'  # путь к файлу весов
+weights = '~/Desktop/kurs4/checkpoints/yolov3.tf'  # путь к файлу checkpoint'ов
+size = 416  # приводим изображения к этому размеру
+checkpoints = '~/Desktop/kurs4/checkpoints/yolov3.tf'
+num_classes = 80  # количество классов в модели
+
+YOLO_V3_LAYERS = [
+    'yolo_darknet',
+    'yolo_conv_0',
+    'yolo_output_0',
+    'yolo_conv_1',
+    'yolo_output_1',
+    'yolo_conv_2',
+    'yolo_output_2',
+]
 
 
 def DarknetConv(x, filters, size, strides=1, batch_norm=True):
@@ -17,7 +42,7 @@ def DarknetConv(x, filters, size, strides=1, batch_norm=True):
                strides=strides, padding=padding,
                use_bias=not batch_norm, kernel_regularizer=l2(0.0005))(x)
     if batch_norm:
-        x = BatchNormalization()(x)
+        x = batch.BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
     return x
 
@@ -128,6 +153,11 @@ def nonMaximumSuppression(outputs, anchors, masks, classes):
         score_threshold=yolo_score_threshold)
 
     return boxes, scores, classes, valid_detections
+
+
+yolo_anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
+                        (59, 119), (116, 90), (156, 198), (373, 326)], np.float32) / 416
+yolo_anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
 
 
 def YoloV3(size=None, channels=3, anchors=yolo_anchors,
